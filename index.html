@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Zvládnu to! – domácí učitelka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFF8F3; --card:#FBEDE6; --white:#FFFFFF; --ink:#2D2A32; --soft:#8A7F87;
+    --accent:#E8674A; --teal:#2BB3A3; --gold:#FFC93C; --ok:#2ECC71;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,-apple-system,sans-serif;user-select:none;-webkit-user-select:none}
+  .app{max-width:520px;margin:0 auto;padding:12px 12px 24px;min-height:100vh;display:flex;flex-direction:column;gap:10px}
+  header{display:flex;align-items:center;justify-content:space-between}
+  h1{font-size:22px;margin:0;font-weight:900;display:flex;align-items:center;gap:6px}
+  h1 span{color:var(--accent)}
+  .stars{display:flex;gap:2px;font-size:22px}
+  .stars i{font-style:normal;filter:grayscale(1);opacity:.35;transition:all .3s}
+  .stars i.on{filter:none;opacity:1;transform:scale(1.15)}
+  .modes{display:flex;gap:6px}
+  .modes button{flex:1;border:0;border-radius:999px;padding:9px 6px;font:800 14px Nunito,sans-serif;background:var(--card);color:var(--ink)}
+  .modes button.active{background:var(--accent);color:#fff}
+  .teacher{display:flex;gap:10px;align-items:center;background:var(--card);border-radius:22px;padding:10px}
+  .teacher svg{width:96px;height:96px;flex:none;border-radius:50%;background:#FFE7D6}
+  .bubble{background:var(--white);border-radius:18px;padding:12px 14px;font-size:19px;font-weight:800;line-height:1.3;min-height:70px;display:flex;align-items:center;position:relative;flex:1}
+  .bubble:before{content:"";position:absolute;left:-8px;top:50%;margin-top:-8px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+  .bubble .en{color:var(--teal)}
+  .stage{background:var(--white);border-radius:22px;padding:8px;position:relative}
+  .stage svg{width:100%;height:auto;display:block;border-radius:16px}
+  .obj{cursor:pointer}
+  .obj.hl{animation:pulse .9s infinite;transform-box:fill-box;transform-origin:center}
+  .obj.ok{filter:drop-shadow(0 0 7px var(--ok)) drop-shadow(0 0 3px var(--ok))}
+  .obj.bad{animation:shake .4s;transform-box:fill-box;transform-origin:center}
+  .cnt.hl{animation:pulse .6s 2;transform-box:fill-box;transform-origin:center}
+  @keyframes pulse{50%{transform:scale(1.1);filter:drop-shadow(0 0 8px #FFB703)}}
+  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .nums{display:none;gap:8px;justify-content:space-between;margin-top:8px}
+  .nums.show{display:flex}
+  .nums button{flex:1;aspect-ratio:1;border:0;border-radius:18px;background:var(--card);font:900 32px Nunito,sans-serif;color:var(--ink)}
+  .nums button:active{transform:scale(.94)}
+  .nums button.ok{background:var(--ok);color:#fff}
+  .nums button.bad{animation:shake .4s;background:#FFD6CF}
+  .controls{display:flex;gap:8px}
+  .controls button{flex:1;border:0;border-radius:18px;background:var(--card);padding:12px 4px;font:800 15px Nunito,sans-serif;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:2px}
+  .controls button b{font-size:24px;line-height:1}
+  .controls button:active{transform:scale(.96)}
+  .note{font-size:12.5px;color:var(--soft);text-align:center;margin-top:4px;font-weight:600}
+  /* overlays */
+  .ov{position:fixed;inset:0;background:rgba(255,248,243,.97);display:none;align-items:center;justify-content:center;z-index:10;padding:20px}
+  .ov.show{display:flex}
+  .ov .box{max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+  .ov h2{margin:0;font-size:28px;font-weight:900}
+  .ov p{margin:0;font-size:18px;font-weight:700;color:var(--soft)}
+  .big{border:0;border-radius:22px;padding:16px 18px;font:900 20px Nunito,sans-serif;color:#fff;background:var(--accent);width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 0 #C24E33}
+  .big:active{transform:translateY(3px);box-shadow:0 3px 0 #C24E33}
+  .big.t{background:var(--teal);box-shadow:0 6px 0 #1E8C7F}
+  .big.g{background:#F4A71D;box-shadow:0 6px 0 #C7830B}
+  .bigstar{font-size:84px;animation:pop .6s ease-out}
+  @keyframes pop{0%{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .burst{position:fixed;pointer-events:none;font-size:26px;z-index:20;animation:fly 1s ease-out forwards}
+  @keyframes fly{to{transform:translate(var(--dx),var(--dy)) scale(.4);opacity:0}}
+  /* avatar animation */
+  #avatar .eyes{transform-box:view-box;transform-origin:60px 60px;animation:blink 4.5s infinite}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+  #avatar .m-open{opacity:0;transform-box:view-box;transform-origin:60px 77px}
+  .talking #avatar .m-open,.talking .av .m-open{opacity:1;animation:talk .2s infinite alternate}
+  .talking #avatar .m-closed{opacity:0}
+  @keyframes talk{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+  .startav{width:150px;height:150px;border-radius:50%;background:#FFE7D6}
+  .mic{margin-top:8px;text-align:center;font-size:16px;font-weight:800;color:var(--soft);min-height:24px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .mic.listen{color:var(--accent)}
+  .mic.listen:before{content:"";width:12px;height:12px;border-radius:50%;background:var(--accent);animation:rec 1s infinite}
+  @keyframes rec{50%{opacity:.25;transform:scale(.7)}}
+  #bMic{background:var(--accent);color:#fff}
+  #bMic.on{background:var(--ok)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1><span>✦</span>Zvládnu to!</h1>
+    <div class="stars" id="stars"></div>
+  </header>
+
+  <div class="modes" id="modes">
+    <button data-mode="place">🏠 Kde je to?</button>
+    <button data-mode="count">🔢 Počítání</button>
+    <button data-mode="english">🇬🇧 English</button>
+  </div>
+
+  <div class="teacher">
+    <svg id="avatar" viewBox="0 0 120 120" aria-label="Emička">
+      <ellipse cx="60" cy="58" rx="41" ry="43" fill="#6B3E26"/>
+      <path d="M26 120 Q28 92 60 90 Q92 92 94 120 Z" fill="#2BB3A3"/>
+      <path d="M48 96 L60 104 L72 96" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      <rect x="53" y="82" width="14" height="12" rx="5" fill="#F7C9AE"/>
+      <ellipse cx="60" cy="58" rx="30" ry="32" fill="#FFD9C2"/>
+      <path d="M29 54 Q32 22 60 21 Q88 22 91 54 Q80 36 64 38 Q58 44 50 40 Q38 40 29 54Z" fill="#6B3E26"/>
+      <path d="M32 41 Q60 12 88 41" fill="none" stroke="#FFC93C" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="84" cy="36" r="6" fill="#E8674A"/>
+      <g class="eyes">
+        <ellipse cx="48" cy="60" rx="4.5" ry="5.5" fill="#2D2A32"/>
+        <ellipse cx="72" cy="60" rx="4.5" ry="5.5" fill="#2D2A32"/>
+        <circle cx="49.5" cy="58" r="1.6" fill="#fff"/>
+        <circle cx="73.5" cy="58" r="1.6" fill="#fff"/>
+      </g>
+      <path d="M42 51 Q48 48 53 51 M67 51 Q72 48 78 51" stroke="#6B3E26" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="40" cy="70" r="5" fill="#FF9E9E" opacity=".55"/>
+      <circle cx="80" cy="70" r="5" fill="#FF9E9E" opacity=".55"/>
+      <path class="m-closed" d="M52 74 Q60 81 68 74" stroke="#A14B4B" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse class="m-open" cx="60" cy="77" rx="7" ry="5.5" fill="#A14B4B"/>
+    </svg>
+    <div class="bubble" id="bubble">Ahoj!</div>
+  </div>
+
+  <div class="stage">
+    <!-- POKOJ -->
+    <svg id="room" viewBox="0 0 400 260">
+      <rect width="400" height="196" fill="#FFF3C9"/>
+      <rect y="196" width="400" height="64" fill="#DCE4F7"/>
+      <line x1="0" y1="196" x2="400" y2="196" stroke="#C9D2EA" stroke-width="3"/>
+
+      <g class="obj" data-id="window">
+        <rect x="262" y="24" width="96" height="78" rx="6" fill="#fff" stroke="#B9A88E" stroke-width="4"/>
+        <rect x="268" y="30" width="84" height="66" fill="#BFE6FF"/>
+        <circle cx="336" cy="46" r="9" fill="#FFE27A"/>
+        <path d="M268 84 Q290 70 310 82 Q330 72 352 84 L352 96 L268 96Z" fill="#A6D98C"/>
+        <line x1="310" y1="30" x2="310" y2="96" stroke="#B9A88E" stroke-width="4"/>
+        <line x1="268" y1="63" x2="352" y2="63" stroke="#B9A88E" stroke-width="4"/>
+      </g>
+
+      <g class="obj" data-id="clock">
+        <circle cx="70" cy="56" r="28" fill="#fff" stroke="#2D2A32" stroke-width="4"/>
+        <g stroke="#2D2A32" stroke-width="2.5" stroke-linecap="round">
+          <line x1="70" y1="33" x2="70" y2="38"/><line x1="70" y1="74" x2="70" y2="79"/>
+          <line x1="47" y1="56" x2="52" y2="56"/><line x1="88" y1="56" x2="93" y2="56"/>
+          <line x1="70" y1="56" x2="70" y2="40" stroke-width="3.5"/>
+          <line x1="70" y1="56" x2="82" y2="62" stroke-width="3.5"/>
+        </g>
+        <circle cx="70" cy="56" r="3" fill="#E8674A"/>
+      </g>
+
+      <g class="obj" data-id="table">
+        <rect x="128" y="118" width="136" height="11" rx="3" fill="#B5835A"/>
+        <rect x="128" y="127" width="136" height="5" fill="#94663F"/>
+        <rect x="137" y="130" width="9" height="80" fill="#A0714A"/>
+        <rect x="246" y="130" width="9" height="80" fill="#A0714A"/>
+      </g>
+
+      <g class="obj" data-id="lamp">
+        <ellipse cx="160" cy="116" rx="13" ry="4" fill="#E0A800"/>
+        <rect x="157" y="98" width="6" height="18" fill="#E0A800"/>
+        <path d="M144 76 L176 76 L184 100 L136 100Z" fill="#FFD36E" stroke="#E0A800" stroke-width="2"/>
+        <path d="M150 100 L170 100 L178 112 L142 112Z" fill="#FFF2B3" opacity=".7"/>
+      </g>
+
+      <g class="obj" data-id="book">
+        <rect x="190" y="106" width="30" height="12" rx="2" fill="#2E86DE"/>
+        <rect x="192" y="108" width="26" height="3" fill="#fff"/>
+        <rect x="190" y="104" width="30" height="4" rx="2" fill="#E8674A"/>
+      </g>
+
+      <g class="obj" data-id="flowers">
+        <path d="M237 82 Q233 70 228 62 M242 82 L242 58 M247 82 Q252 70 258 64" stroke="#3E9B4F" stroke-width="3" fill="none"/>
+        <circle cx="228" cy="60" r="7" fill="#FF7AA2"/><circle cx="228" cy="60" r="2.5" fill="#FFE27A"/>
+        <circle cx="242" cy="54" r="7" fill="#B07CFF"/><circle cx="242" cy="54" r="2.5" fill="#FFE27A"/>
+        <circle cx="258" cy="62" r="7" fill="#FF9E40"/><circle cx="258" cy="62" r="2.5" fill="#FFE27A"/>
+        <path d="M233 82 L251 82 Q256 96 250 118 L234 118 Q228 96 233 82Z" fill="#3F51B5"/>
+      </g>
+
+      <g class="obj" data-id="chair">
+        <rect x="52" y="92" width="8" height="122" rx="3" fill="#C99A6B"/>
+        <rect x="100" y="148" width="8" height="66" rx="3" fill="#C99A6B"/>
+        <rect x="52" y="92" width="44" height="8" rx="3" fill="#C99A6B"/>
+        <rect x="52" y="112" width="44" height="6" rx="3" fill="#C99A6B"/>
+        <rect x="88" y="150" width="7" height="64" rx="3" fill="#B58756"/>
+        <rect x="48" y="144" width="64" height="10" rx="4" fill="#E2B07A"/>
+      </g>
+
+      <g class="obj" data-id="ball">
+        <circle cx="196" cy="216" r="18" fill="#fff" stroke="#2D2A32" stroke-width="2.5"/>
+        <polygon points="196,208 203.6,213.5 200.7,222.5 191.3,222.5 188.4,213.5" fill="#2D2A32"/>
+        <path d="M196 208 L196 199 M203.6 213.5 L212 210 M200.7 222.5 L206 230 M191.3 222.5 L186 230 M188.4 213.5 L180 210" stroke="#2D2A32" stroke-width="2"/>
+      </g>
+
+      <g class="obj" data-id="armchair">
+        <rect x="312" y="118" width="76" height="66" rx="18" fill="#8FB0EE"/>
+        <rect x="304" y="150" width="22" height="52" rx="10" fill="#7C9FE3"/>
+        <rect x="374" y="150" width="22" height="52" rx="10" fill="#7C9FE3"/>
+        <rect x="318" y="166" width="64" height="30" rx="8" fill="#A9C2F5"/>
+        <rect x="314" y="200" width="7" height="14" fill="#6B5A4A"/>
+        <rect x="379" y="200" width="7" height="14" fill="#6B5A4A"/>
+      </g>
+
+      <g class="obj" data-id="cat">
+        <path d="M296 214 Q312 210 308 196" stroke="#55585F" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="282" cy="200" rx="15" ry="17" fill="#55585F"/>
+        <circle cx="282" cy="176" r="12" fill="#55585F"/>
+        <polygon points="272,170 274,158 281,166" fill="#55585F"/>
+        <polygon points="292,170 290,158 283,166" fill="#55585F"/>
+        <circle cx="277.5" cy="176" r="2.6" fill="#FFD84D"/><circle cx="286.5" cy="176" r="2.6" fill="#FFD84D"/>
+        <path d="M280 182 L282 184 L284 182" stroke="#FFB3C1" stroke-width="1.6" fill="none"/>
+      </g>
+    </svg>
+
+    <!-- POČÍTÁNÍ -->
+    <svg id="count" viewBox="0 0 400 260" style="display:none"></svg>
+
+    <div class="nums" id="nums">
+      <button data-n="1">1</button><button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button><button data-n="5">5</button>
+    </div>
+    <div class="mic" id="mic"></div>
+  </div>
+
+  <div class="controls">
+    <button id="bMic"><b>🎤</b>Mluvit</button>
+    <button id="bRepeat"><b>🔁</b>Zopakovat</button>
+    <button id="bHint"><b>💡</b>Nápověda</button>
+    <button id="bPause"><b>⏸️</b>Pauza</button>
+  </div>
+  <div class="note" id="total"></div>
+</div>
+
+<!-- START -->
+<div class="ov show" id="ovStart">
+  <div class="box">
+    <svg class="startav av" viewBox="0 0 120 120" id="avStart"></svg>
+    <h2>Ahoj Marečku!</h2>
+    <p>Já jsem Emička. Pojď si se mnou hrát.</p>
+    <button class="big" data-start="place">🏠 Kde je to?</button>
+    <button class="big t" data-start="count">🔢 Počítání</button>
+    <button class="big g" data-start="english">🇬🇧 English</button>
+  </div>
+</div>
+
+<!-- PAUZA -->
+<div class="ov" id="ovPause">
+  <div class="box">
+    <div class="bigstar">⏸️</div>
+    <h2>Pauza</h2>
+    <p>Emička na tebe počká.</p>
+    <button class="big t" id="bResume">▶️ Pokračovat</button>
+  </div>
+</div>
+
+<!-- HOTOVO -->
+<div class="ov" id="ovDone">
+  <div class="box">
+    <div class="bigstar">🌟</div>
+    <h2>Hotovo, šikulo!</h2>
+    <p id="doneText">Máš 5 hvězdiček.</p>
+    <button class="big" id="bAgain">🔁 Ještě jednou</button>
+    <button class="big t" id="bMenu">🏠 Vybrat jinou hru</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const CHILD_VOC = 'Marečku';
+  const $ = s => document.querySelector(s);
+
+  // avatar kopie na úvodní obrazovku
+  $('#avStart').innerHTML = $('#avatar').innerHTML;
+
+  // ---------- data ----------
+  const OBJ = {
+    chair:{is:'Tohle je židle.', n:'židle', en:'chair'},
+    table:{is:'Tohle je stůl.', n:'stůl', en:'table'},
+    lamp:{is:'Tohle je lampa.', n:'lampa', en:'lamp'},
+    book:{is:'Tohle je kniha.', n:'kniha', en:'book'},
+    flowers:{is:'Tohle jsou květiny.', n:'květiny', en:'flowers', pl:true},
+    ball:{is:'Tohle je míč.', n:'míč', en:'ball'},
+    armchair:{is:'Tohle je křeslo.', n:'křeslo', en:'armchair'},
+    cat:{is:'Tohle je kočka.', n:'kočka', en:'cat'},
+    clock:{is:'Tohle jsou hodiny.', n:'hodiny', en:'clock'},
+    window:{is:'Tohle je okno.', n:'okno', en:'window'}
+  };
+  const PLACE = [
+    {t:'chair', p:'Ukaž mi, kde je židle.', d:'Tohle je židle.'},
+    {t:'ball', p:'Co je pod stolem?', d:'Pod stolem je míč.'},
+    {t:'lamp', p:'Co svítí na stole?', d:'Na stole svítí lampa.'},
+    {t:'cat', p:'Kdo sedí vedle křesla?', d:'Vedle křesla sedí kočka. Mňau!'},
+    {t:'clock', p:'Co visí na zdi?', d:'Na zdi visí hodiny. Tik tak!'},
+    {t:'flowers', p:'Co je ve váze?', d:'Ve váze jsou květiny.'},
+    {t:'book', p:'Co leží na stole vedle vázy?', d:'Vedle vázy leží kniha.'},
+    {t:'window', p:'Kde je okno?', d:'Tady je okno. Venku svítí sluníčko.'},
+    {t:'armchair', p:'Ukaž mi křeslo.', d:'To je křeslo. Je modré.'},
+    {t:'table', p:'Na čem stojí lampa?', d:'Lampa stojí na stole.'}
+  ];
+  const EN_IDS = ['cat','ball','chair','table','lamp','book','clock','window','flowers'];
+  const PRAISE = ['Výborně!','Super, '+CHILD_VOC+'!','Paráda!','Přesně tak!','Jsi šikula!'];
+  const NUM = ['','jedna','dva','tři','čtyři','pět'];
+  const NUMF = ['','jedna','dvě','tři','čtyři','pět'];
+  const ITEMS = {
+    apple:{gen:'jablíček'},
+    ball:{gen:'míčů'},
+    star:{gen:'hvězdiček'}
+  };
+
+  // ---------- stav ----------
+  const S = {mode:'place', tasks:[], idx:0, stars:0, wrong:0, accepting:false, paused:false, current:null};
+  let total = 0;
+  try{ total = parseInt(localStorage.getItem('zvladnu_total')||'0',10)||0 }catch(e){}
+
+  const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; };
+  const rnd = (a,b) => a+Math.floor(Math.random()*(b-a+1));
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+
+  // ---------- řeč ----------
+  let voices = [];
+  const loadVoices = () => { try{ voices = speechSynthesis.getVoices() }catch(e){} };
+  if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+  function voiceFor(lang){
+    const pre = lang.slice(0,2);
+    const list = voices.filter(v=>v.lang && v.lang.replace('_','-').toLowerCase().startsWith(pre));
+    return list.find(v=>/female|zuzana|iveta|samantha|serena|kate|martha/i.test(v.name)) || list.find(v=>v.lang.replace('_','-')===lang) || list[0] || null;
+  }
+  let token = 0;
+  function talking(on){ document.body.classList.toggle('talking', !!on); }
+  function cancelSpeech(){ token++; try{ speechSynthesis.cancel() }catch(e){} talking(false); }
+  function speak(parts){
+    const my = ++token;
+    try{ speechSynthesis.cancel() }catch(e){}
+    return new Promise(res=>{
+      let i = 0;
+      const next = () => {
+        if(my!==token) return;
+        if(i>=parts.length){ talking(false); res(); return; }
+        const p = parts[i++];
+        const est = 600 + p.t.length*90;
+        let finished = false;
+        const done = () => { if(finished) return; finished = true; next(); };
+        talking(true);
+        if(!('speechSynthesis' in window)){ setTimeout(done, est); return; }
+        const u = new SpeechSynthesisUtterance(p.t);
+        u.lang = p.l==='en' ? 'en-GB' : 'cs-CZ';
+        const v = voiceFor(u.lang); if(v) u.voice = v;
+        u.rate = p.l==='en' ? 0.85 : 0.95;
+        u.pitch = 1.15;
+        u.onend = done; u.onerror = done;
+        speechSynthesis.speak(u);
+        setTimeout(done, est*2 + 1500); // pojistka, když prohlížeč nepošle onend
+      };
+      next();
+    });
+  }
+  function say(parts){
+    stopListening();
+    const b = $('#bubble');
+    b.innerHTML = parts.map(p => p.l==='en' ? '<span class="en">'+p.t+'</span>' : p.t).join(' ');
+    return speak(parts);
+  }
+  const cs = t => ({t, l:'cs'});
+  const en = t => ({t, l:'en'});
+
+  // ---------- úkoly ----------
+  function buildTasks(mode){
+    if(mode==='place'){
+      return shuffle(PLACE).slice(0,5).map(x=>({type:'tap', target:x.t, prompt:[cs(x.p)], done:[cs(x.d)]}));
+    }
+    if(mode==='english'){
+      return shuffle(EN_IDS).slice(0,5).map(id=>{
+        const o = OBJ[id];
+        const q = o.pl ? 'Where are the '+o.en+'?' : 'Where is the '+o.en+'?';
+        return {type:'tap', target:id,
+          prompt:[en(q), cs('Hledáme: '+o.n+'.')],
+          done:[en('Yes! The '+o.en+'!'), cs(cap(o.n)+(o.pl?' se anglicky řeknou':' se anglicky řekne')), en(o.en)]};
+      });
+    }
+    // počítání: 3× spočítej, 2× sčítání
+    const out = [];
+    const types = shuffle(Object.keys(ITEMS));
+    for(let k=0;k<3;k++){
+      const n = rnd(1,5), it = types[k%types.length];
+      out.push({type:'count', item:it, a:n, b:0, answer:n,
+        prompt:[cs('Kolik je tady '+ITEMS[it].gen+'? Spočítej je prstem.')],
+        done:[cs(cap(NUMF[n])+'!')]});
+    }
+    for(let k=0;k<2;k++){
+      const a = rnd(1,3), b = rnd(1,2), it = pick(Object.keys(ITEMS));
+      out.push({type:'count', item:it, a, b, answer:a+b,
+        prompt:[cs('Kolik je '+NUM[a]+' a '+NUM[b]+'? Spočítej všechno dohromady.')],
+        done:[cs(cap(NUM[a])+' a '+NUM[b]+' je '+NUM[a+b]+'.')]});
+    }
+    return out;
+  }
+  const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+  // ---------- kreslení počítání ----------
+  function itemSVG(type, x, y){
+    if(type==='apple') return '<g class="cnt" transform="translate('+x+','+y+') scale(1.3)"><circle r="22" fill="#E63946"/><circle cx="-7" cy="-7" r="5" fill="#fff" opacity=".35"/><rect x="-2" y="-30" width="4" height="10" rx="2" fill="#6B3E26"/><ellipse cx="9" cy="-26" rx="8" ry="4" fill="#3E9B4F" transform="rotate(-25 9 -26)"/></g>';
+    if(type==='ball') return '<g class="cnt" transform="translate('+x+','+y+') scale(1.3)"><circle r="22" fill="#fff" stroke="#2D2A32" stroke-width="2.5"/><polygon points="0,-9 8.6,-2.8 5.3,7.3 -5.3,7.3 -8.6,-2.8" fill="#2D2A32"/><path d="M0 -9 L0 -21 M8.6 -2.8 L20 -6 M5.3 7.3 L12 18 M-5.3 7.3 L-12 18 M-8.6 -2.8 L-20 -6" stroke="#2D2A32" stroke-width="2"/></g>';
+    // star
+    const pts=[]; for(let i=0;i<10;i++){const r=i%2?11:25, a=Math.PI/5*i-Math.PI/2; pts.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1));}
+    return '<g class="cnt" transform="translate('+x+','+y+') scale(1.3)"><polygon points="'+pts.join(' ')+'" fill="#FFC93C" stroke="#E0A800" stroke-width="2.5" stroke-linejoin="round"/></g>';
+  }
+  function drawCount(t){
+    let s = '<rect width="400" height="260" fill="#FFF7E0"/>';
+    if(!t.b){
+      const n=t.a, gap=74, w=(n-1)*gap, x0=200-w/2;
+      for(let i=0;i<n;i++) s += itemSVG(t.item, x0+i*gap, 130);
+    } else {
+      const gap=64;
+      const total=t.a+t.b, w=(total-1)*gap+50, x0=200-w/2;
+      let x=x0;
+      for(let i=0;i<t.a;i++){ s+=itemSVG(t.item,x,130); x+=gap; }
+      s += '<text x="'+(x-gap/2+25)+'" y="143" text-anchor="middle" font-family="Nunito" font-weight="900" font-size="40" fill="#E8674A">+</text>';
+      x+=50;
+      for(let i=0;i<t.b;i++){ s+=itemSVG(t.item,x,130); x+=gap; }
+    }
+    $('#count').innerHTML = s;
+  }
+
+  // ---------- průběh ----------
+  function renderStars(){
+    $('#stars').innerHTML = [0,1,2,3,4].map(i=>'<i class="'+(i<S.stars?'on':'')+'">⭐</i>').join('');
+    $('#total').textContent = 'Celkem nasbíráno: '+total+' ⭐ · Jedno kolo = 5 úkolů';
+  }
+  function startRound(mode){
+    cancelSpeech();
+    S.mode = mode; S.tasks = buildTasks(mode); S.idx = 0; S.stars = 0;
+    document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+    ['#ovStart','#ovDone','#ovPause'].forEach(id=>$(id).classList.remove('show'));
+    S.paused = false;
+    renderStars();
+    showTask();
+  }
+  function clearMarks(){
+    document.querySelectorAll('.obj').forEach(o=>o.classList.remove('hl','ok','bad'));
+    document.querySelectorAll('#nums button').forEach(b=>b.classList.remove('ok','bad'));
+  }
+  function showTask(){
+    const t = S.current = S.tasks[S.idx];
+    S.wrong = 0; clearMarks();
+    const isCount = t.type==='count';
+    $('#room').style.display = isCount ? 'none' : 'block';
+    $('#count').style.display = isCount ? 'block' : 'none';
+    $('#nums').classList.toggle('show', isCount);
+    if(isCount) drawCount(t);
+    S.accepting = true; S.unknown = 0;
+    say(t.prompt).then(()=>autoListen());
+  }
+  function burst(el){
+    const r = el.getBoundingClientRect();
+    for(let i=0;i<8;i++){
+      const s = document.createElement('div');
+      s.className='burst'; s.textContent = pick(['⭐','✨','🌟']);
+      s.style.left = (r.left+r.width/2-12)+'px'; s.style.top = (r.top+r.height/2-12)+'px';
+      const a = Math.PI*2*i/8;
+      s.style.setProperty('--dx', Math.cos(a)*90+'px'); s.style.setProperty('--dy', Math.sin(a)*90+'px');
+      document.body.appendChild(s); setTimeout(()=>s.remove(),1000);
+    }
+  }
+  function correct(el){
+    S.accepting = false;
+    el.classList.remove('hl'); el.classList.add('ok');
+    burst(el);
+    S.stars++; renderStars();
+    say([cs(pick(PRAISE)), ...S.current.done]).then(()=>setTimeout(advance, 500));
+  }
+  function wrong(el, msg){
+    S.wrong++;
+    if(el){ el.classList.remove('bad'); void el.getBoundingClientRect(); el.classList.add('bad'); }
+    say([cs(msg)]).then(()=>autoListen());
+    if(S.wrong>=2) hint(true);
+  }
+
+  // ---------- hlasové odpovědi ----------
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, micBlocked = false, micState = '';
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ');
+  // krátké tvary = přesné slovo, delší = začátek slova (pokryje pády: míček, míčku, kočičku…)
+  const SYN_CS = {
+    ball:['mic','mice','micek','micku','mickem','balon','fotbal'],
+    cat:['kock','kocic','kote','kotat','micin','micka','mnau'],
+    chair:['zidl','zidli','zidle'],
+    table:['stul','stol','stolek','stolk'],
+    lamp:['lamp','svetl','lampic'],
+    book:['knih','knizk','knizec'],
+    flowers:['kvet','kytk','kytic','kvetin'],
+    armchair:['kresl','gauc'],
+    clock:['hodin','budik'],
+    window:['okn','okno','okyn','okynk']
+  };
+  const SYN_EN = {
+    ball:['ball','bal','bowl','bol'], cat:['cat','cats','kat','ket','kit'], chair:['chair','chairs','cher','share'],
+    table:['table','tabl','tejbl'], lamp:['lamp','lump'], book:['book','buk','books'], flowers:['flower','flowers','flour'],
+    armchair:['armchair','arm'], clock:['clock','klok','clocks'], window:['window','windows','vindou']
+  };
+  const NUMW = {jedna:1,jeden:1,jedno:1,jednu:1,dva:2,dve:2,tri:3,ctyri:4,ctyry:4,pet:5,sest:6,sedm:7,osm:8,devet:9,deset:10};
+  function matches(words, stems){
+    return words.some(w => stems.some(s => s.length<4 ? w===s : w.startsWith(s)));
+  }
+  function findObj(words, syn){
+    const t = S.current.target;
+    if(matches(words, syn[t])) return t;
+    return Object.keys(syn).find(k => matches(words, syn[k])) || null;
+  }
+  function findNum(words){
+    for(const w of words){ if(/^\d+$/.test(w)) return +w; if(NUMW[w]) return NUMW[w]; }
+    return null;
+  }
+  function micStatus(state, text){
+    micState = state;
+    const m = $('#mic');
+    m.className = 'mic ' + state;
+    m.textContent = text || ({
+      listen:'Poslouchám tě…',
+      tap:'Ťukni na 🎤 Mluvit a řekni odpověď',
+      noapi:'Tady hlas nefunguje – ťukej na obrázky',
+      blocked:'Tady mikrofon nejde – otevři hru přes vlastní odkaz v Safari'
+    })[state] || '';
+    $('#bMic').classList.toggle('on', state==='listen');
+  }
+  function stopListening(){
+    if(rec){ const r = rec; rec = null; r.onend = r.onresult = r.onerror = null; try{ r.abort() }catch(e){} }
+    if(micState==='listen') micStatus('tap');
+  }
+  function autoListen(){ if(!micBlocked) startListening(false); else if(SR) micStatus('tap'); }
+  function startListening(fromUser){
+    if(!SR){ micStatus('noapi'); return; }
+    if(!S.accepting || S.paused || !S.current) return;
+    stopListening();
+    if(fromUser) cancelSpeech();
+    const r = rec = new SR();
+    r.lang = S.mode==='english' ? 'en-GB' : 'cs-CZ';
+    r.interimResults = false; r.continuous = false; r.maxAlternatives = 5;
+    r.onstart = () => micStatus('listen');
+    r.onresult = e => {
+      const alts = [];
+      for(const res of e.results) for(let i=0;i<res.length;i++) alts.push(res[i].transcript);
+      rec = null; try{ r.abort() }catch(err){}
+      handleSpeech(alts);
+    };
+    r.onerror = e => {
+      rec = null;
+      if(e.error==='not-allowed' || e.error==='service-not-allowed'){
+        micBlocked = true; micStatus(fromUser ? 'blocked' : 'tap');
+      } else micStatus('tap');
+    };
+    r.onend = () => { if(rec===r){ rec = null; micStatus('tap'); } };
+    try{ r.start(); if(fromUser) micBlocked = false; }catch(e){ micStatus('tap'); }
+  }
+  function handleSpeech(alts){
+    if(!S.accepting || S.paused) return;
+    const heard = alts[0] || '';
+    micStatus('heard', 'Slyšela jsem: „'+heard+'“');
+    const words = norm(alts.join(' ')).split(/\s+/).filter(Boolean);
+    const t = S.current;
+    if(t.type==='count'){
+      const n = findNum(words);
+      if(n===null) return unknown();
+      const btn = document.querySelector('#nums button[data-n="'+n+'"]');
+      if(n===t.answer) return correct(btn);
+      return wrong(btn, 'Říkáš '+(NUMF[n]||n)+'? To není ono. Spočítej je ještě jednou.');
+    }
+    const id = findObj(words, S.mode==='english' ? SYN_EN : SYN_CS);
+    if(!id) return unknown();
+    const el = document.querySelector('.obj[data-id="'+id+'"]');
+    if(id===t.target) return correct(el);
+    wrong(el, (S.mode==='english' ? 'Tohle je '+OBJ[id].en+'. ' : OBJ[id].is+' ') + 'Zkus to ještě jednou.');
+  }
+  function unknown(){
+    S.unknown = (S.unknown||0)+1;
+    const p = say([cs(S.unknown<2 ? 'Nerozuměla jsem ti. Řekni to ještě jednou.' : 'Pořád ti nerozumím. Můžeš ťuknout na obrázek.')]);
+    if(S.unknown<2) p.then(()=>autoListen());
+  }
+  function advance(){
+    if(S.paused) return;
+    S.idx++;
+    if(S.idx >= S.tasks.length) finish(); else showTask();
+  }
+  function finish(){
+    total += 5;
+    try{ localStorage.setItem('zvladnu_total', String(total)) }catch(e){}
+    renderStars();
+    $('#doneText').textContent = 'Máš 5 nových hvězdiček. Celkem už '+total+' ⭐';
+    stopListening(); micStatus('');
+    $('#ovDone').classList.add('show');
+    speak([cs('Hotovo! '+CHILD_VOC+', máš všech pět hvězdiček. Jsi šikula!')]);
+  }
+  function hint(silent){
+    const t = S.current; if(!t) return;
+    if(t.type==='tap'){
+      document.querySelector('.obj[data-id="'+t.target+'"]').classList.add('hl');
+      if(!silent) say([cs('Podívej, něco tady bliká.')]);
+    } else {
+      const items = document.querySelectorAll('#count .cnt');
+      items.forEach((it,i)=>setTimeout(()=>{ it.classList.remove('hl'); void it.getBoundingClientRect(); it.classList.add('hl'); }, i*700));
+      if(!silent) say([cs('Ukazuj prstem na každý obrázek a počítej se mnou.')]);
+    }
+  }
+
+  // ---------- události ----------
+  $('#room').addEventListener('click', e=>{
+    const g = e.target.closest('.obj'); if(!g || !S.accepting || S.paused) return;
+    const t = S.current; if(t.type!=='tap') return;
+    const id = g.dataset.id;
+    if(id===t.target) correct(g);
+    else wrong(g, (S.mode==='english' ? 'Tohle je '+OBJ[id].en+'. ' : OBJ[id].is+' ') + 'Zkus to ještě jednou.');
+  });
+  $('#nums').addEventListener('click', e=>{
+    const b = e.target.closest('button'); if(!b || !S.accepting || S.paused) return;
+    const n = +b.dataset.n;
+    if(n===S.current.answer) correct(b);
+    else wrong(b, 'Hmm, to není ono. Spočítej je ještě jednou.');
+  });
+  $('#bRepeat').onclick = ()=>{ if(S.current && !S.paused) say(S.current.prompt).then(()=>autoListen()); };
+  $('#bMic').onclick = ()=>{ if(S.paused) return; if(micState==='listen'){ stopListening(); return; } startListening(true); };
+  $('#bHint').onclick = ()=>{ if(!S.paused) hint(false); };
+  $('#bPause').onclick = ()=>{ S.paused = true; stopListening(); cancelSpeech(); $('#ovPause').classList.add('show'); };
+  $('#bResume').onclick = ()=>{ S.paused = false; $('#ovPause').classList.remove('show'); if(S.accepting) say(S.current.prompt).then(()=>autoListen()); else advance(); };
+  $('#bAgain').onclick = ()=>startRound(S.mode);
+  $('#bMenu').onclick = ()=>{ cancelSpeech(); $('#ovDone').classList.remove('show'); $('#ovStart').classList.add('show'); };
+  document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>{
+    // první dotyk odemkne řeč na iPhonu
+    speak([cs('Ahoj '+CHILD_VOC+'! Jdeme na to.')]).then(()=>{});
+    const m = b.dataset.start;
+    setTimeout(()=>startRound(m), 50);
+  });
+  document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>startRound(b.dataset.mode));
+
+  renderStars();
+  micStatus(SR ? 'tap' : 'noapi');
+})();
+</script>
+</body>
+</html>

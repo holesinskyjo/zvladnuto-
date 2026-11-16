@@ -273,7 +273,11 @@
     <button class="back" id="bParentBack">🏠</button>
     <h1><span>✦</span><em>Pro rodiče</em></h1>
   </header>
-  <div class="card">
+  <div class="card" id="standaloneNote" style="display:none">
+    <h3>📷 Nové učení ze školky</h3>
+    <p class="s">Vyfoť, co se Mareček učí, a pošli to Claudovi do projektu Rodina s větou „Přidej do Zvládnu to“. Do pár minut se nové téma objeví na hlavní obrazovce.</p>
+  </div>
+  <div class="card" id="genCard">
     <h3>📷 Přidat vlastní učení</h3>
     <p class="s">Vyfoť pracovní list, obrázek nebo nástěnku ze školky. Emička z toho připraví krátké vysvětlení a 6 úkolů na procvičení.</p>
     <label class="photo" id="photoBox"><span id="photoLabel">📷 Vyfotit nebo vybrat fotku</span><input type="file" accept="image/*" id="photoIn"></label>
@@ -967,7 +971,16 @@ Pravidla:
   // ================== SCHOPNOSTI PROSTŘEDÍ ==================
   loadLocal();
   renderStars();
-  if(window.claude && typeof window.claude.use==='function'){
+  const IN_CLAUDE = !!(window.claude && typeof window.claude.use==='function');
+  if(!IN_CLAUDE){
+    // samostatná verze na vlastní adrese: učení připravuje Claude a ukládá do lessons.json
+    $('#genCard').style.display = 'none';
+    $('#standaloneNote').style.display = 'block';
+    fetch('lessons.json', {cache:'no-store'}).then(r=>r.ok?r.json():[]).then(list=>{
+      if(Array.isArray(list)){ LESSONS = list.map((l,i)=>Object.assign({id:'f'+i}, l)); renderLessons(); }
+    }).catch(()=>{});
+  }
+  if(IN_CLAUDE){
     claude.use('tts').then(t=>{ TTS = t || null; }).catch(()=>{});
     claude.use('dictation').then(d=>{
       if(!d) return;

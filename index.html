@@ -64,6 +64,14 @@
   .explain.show{display:flex}
   .explain .em{font-size:88px;line-height:1}
   .explain p{margin:0;font-size:19px;font-weight:800;line-height:1.35}
+  .pic{display:none;position:relative;height:250px;border-radius:16px;overflow:hidden;background:linear-gradient(#CDEBFF 0 62%,#BFE3A5 62%)}
+  .pic.show{display:block}
+  .pic span{position:absolute;transform:translate(-50%,-50%);line-height:1}
+  .pic .solo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;font-size:110px;background:#FFF7E0}
+  .choice{position:relative}
+  .choice .badge{position:absolute;top:8px;left:8px;width:34px;height:34px;border-radius:50%;background:var(--ok);color:#fff;font:900 20px Nunito,sans-serif;display:flex;align-items:center;justify-content:center}
+  .okbtn{display:none;margin:8px auto 0;border:0;border-radius:14px;background:#E7F7F4;color:#1E8C7F;font:800 14px Nunito,sans-serif;padding:9px 14px}
+  .okbtn.show{display:block}
   .mic{margin-top:8px;text-align:center;font-size:15px;font-weight:800;color:var(--soft);min-height:22px;display:flex;align-items:center;justify-content:center;gap:8px}
   .mic.listen{color:var(--accent)}
   .mic.listen:before{content:"";width:12px;height:12px;border-radius:50%;background:var(--accent);animation:rec 1s infinite}
@@ -132,6 +140,14 @@
     <button class="tile c5" data-mode="shapes"><b>🔺</b>Barvy a tvary</button>
     <button class="tile c4" data-mode="odd"><b>🤔</b>Co sem nepatří?</button>
     <button class="tile c6" data-mode="english"><b>🇬🇧</b>English</button>
+  </div>
+  <div class="sec">🗣️ Mluvení</div>
+  <div class="tiles">
+    <button class="tile c2" data-mode="see"><b>👀</b>Co vidíš?</button>
+    <button class="tile c3" data-mode="action"><b>🏃</b>Co se děje?</button>
+    <button class="tile c1" data-mode="order"><b>🐣</b>Co bylo první?</button>
+    <button class="tile c5" data-mode="social"><b>🤝</b>Co bys udělal?</button>
+    <button class="tile c4" data-mode="story" style="grid-column:1/-1"><b>📖</b>Vyprávěj mi</button>
   </div>
   <div class="sec">⭐ Moje učení ze školky</div>
   <div class="tiles" id="myTiles"></div>
@@ -256,7 +272,9 @@
     <div class="nums" id="nums">
       <button data-n="1">1</button><button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button><button data-n="5">5</button>
     </div>
+    <div class="pic" id="pic"></div>
     <div class="mic" id="mic"></div>
+    <button class="okbtn" id="bOk">👍 Řekl to (potvrdí rodič)</button>
   </div>
 
   <div class="controls">
@@ -383,6 +401,55 @@
     {set:[['🐦','ptáček'],['✈️','letadlo'],['🦋','motýl']], odd:['🐢','želva'], why:'Želva neumí létat.'},
     {set:[['🥄','lžíce'],['🍴','vidlička'],['🍽️','talíř']], odd:['🧦','ponožka'], why:'Ponožka nepatří ke stolování.'},
     {set:[['⚽','míč'],['🥅','branka'],['👟','kopačky']], odd:['🛁','vana'], why:'Vana k fotbalu nepatří.'}
+  ];
+
+  // ---------- mluvení ----------
+  const ACTIONS = [
+    {e:'🏊', a:'plave', d:'Plave ve vodě.', kw:['plav']},
+    {e:'🏃', a:'běží', d:'Běží rychle jako vítr.', kw:['bezi','bezik','utik','utek','sprint','zavod']},
+    {e:'🚴', a:'jede na kole', d:'Jede na kole.', kw:['jede','jezd','kole','kolo','slapa']},
+    {e:'😴', a:'spí', d:'Spinká a odpočívá.', kw:['spi','spink','chrap','hajin','odpociv']},
+    {e:'🧒🍝', a:'jí', d:'Papá špagety.', kw:['ji','jidl','papa','bast','spaget','obed','vecer']},
+    {e:'🧒🪥', a:'čistí si zuby', d:'Čistí si zoubky.', kw:['cist','zub','zoub','pasta','kartac']},
+    {e:'🧒🎨', a:'maluje', d:'Maluje obrázek.', kw:['malu','kresl','barv','obraz']},
+    {e:'🧒📖', a:'čte', d:'Čte si knížku.', kw:['cte','cist','knizk','knih','prohliz']},
+    {e:'💃', a:'tančí', d:'Tancuje.', kw:['tanc','tanci','tancu']},
+    {e:'🧗', a:'leze', d:'Leze nahoru.', kw:['leze','leza','sply','horolez']},
+    {e:'🧒⚽', a:'kope do míče', d:'Hraje fotbal a kope do míče.', kw:['kope','kopa','fotbal','hraje','mic','micem','balon']},
+    {e:'🛁', a:'koupe se', d:'Koupe se ve vaně.', kw:['koup','myj','vana','vane','mydl']},
+    {e:'🎤', a:'zpívá', d:'Zpívá písničku.', kw:['zpiv','pisn']}
+  ];
+  const ORDERS = [
+    {c:[['🥚','vajíčko',['vaj','vejc']],['🐣','kuřátko',['kur','kuratk']],['🐔','slepice',['slep','kohout']]], why:'Nejdřív je vajíčko. Z něj se vylíhne kuřátko a vyroste slepice.'},
+    {c:[['🌱','klíček',['klic','semin']],['🌿','rostlinka',['rostl','list']],['🌻','kytka',['kytk','kvet','slunec']]], why:'Ze semínka vyroste klíček, pak rostlinka a nakonec rozkvete.'},
+    {c:[['🌸','kvítek',['kvit','kvet']],['🍏','malé jablíčko',['zelen','mal']],['🍎','zralé jablko',['cerven','zral','velk']]], why:'Nejdřív strom kvete, pak roste malé jablíčko a nakonec dozraje.'},
+    {c:[['😴','spinkám',['spink','spi','post']],['👕','oblékám se',['oblek','tricko','obleku']],['🏫','jdu do školky',['skolk','skol','jdu']]], why:'Ráno vstanu, obléknu se a jdu do školky.'},
+    {c:[['❄️','sníh',['snih','snez','vlock']],['⛄','sněhulák',['snehul']],['💧','voda',['vod','rozta','kapk']]], why:'Napadne sníh, postavíme sněhuláka a když je teplo, roztaje na vodu.'},
+    {c:[['🥚','vajíčko',['vaj','vejc']],['🐛','housenka',['housen','cerv']],['🦋','motýl',['motyl']]], why:'Z vajíčka se vylíhne housenka a z ní je nakonec motýl.'},
+    {c:[['🧱','cihly',['cihl','kostk']],['🏗️','stavba',['stav','jerab']],['🏠','domeček',['dom','domec']]], why:'Z cihel se staví a nakonec je hotový domeček.'},
+    {c:[['🍞','chleba',['chleb','rohlik']],['🧈','máslo',['masl','namaz']],['😋','papám',['papa','jim','snim','mnam']]], why:'Vezmu chleba, namažu máslo a pak papám. Mňam!'}
+  ];
+  const SOCIAL = [
+    {pic:'🧒🧱', q:'Kamarádovi se rozsypaly kostky. Co uděláš?', o:[['🤝','pomůžu mu',['pomu','pomoh','pomoc','sbir','posbir','sebr']],['😂','vysměju se',['smej','smat','vysm']],['🏃','uteču',['utek','utik','odejd']]], why:'Pomůžeme mu kostky posbírat. Kamarádi si pomáhají.'},
+    {pic:'👧🍦', q:'Holčička upustila zmrzlinu. Jak se asi cítí?', o:[['😢','smutně',['smut','brec','plac']],['😄','vesele',['vesel','rad','stast']],['😴','ospale',['ospal','spi']]], why:'Je smutná. Můžeme ji pohladit, nebo se s ní rozdělit.'},
+    {pic:'🧒🚗', q:'Chceš si půjčit autíčko, se kterým si hraje kamarád. Co uděláš?', o:[['🙏','zeptám se',['zept','prosim','pujc','poprosi']],['✊','vezmu mu ho',['vezm','sebr','vytrh']],['😭','brečím',['brec','plac']]], why:'Řekneme: Půjčíš mi ho, prosím? A chvilku počkáme.'},
+    {pic:'🎁', q:'Někdo ti dal dárek. Co řekneš?', o:[['🙏','děkuju',['dek','dekuj','diky']],['🙈','nic',['nic','mlc']],['😠','nechci',['nechc']]], why:'Řekneme: Děkuju! Ten, kdo dárek dal, má radost.'},
+    {pic:'🧒🤕', q:'Kamarád spadl a bolí ho koleno. Co uděláš?', o:[['🫂','pomůžu mu',['pomu','pomoh','pomoc','zvedn','obejm','utes']],['😂','směju se',['smej','smat']],['⚽','hraju dál',['hraj','fotbal']]], why:'Zeptáme se, jestli je v pořádku, a zavoláme paní učitelku.'},
+    {pic:'🎂', q:'Máš narozeniny a dostal jsi dort. Jak se cítíš?', o:[['😄','vesele',['vesel','rad','stast','super']],['😢','smutně',['smut']],['😡','naštvaně',['nastv','zl']]], why:'Máme radost a těšíme se na oslavu.'},
+    {pic:'🥛', q:'Rozlil jsi mléko. Co uděláš?', o:[['🧽','utřu to',['utr','ukl','uklid','hadr']],['🙈','schovám se',['schov']],['🤷','nic',['nic']]], why:'Řekneme to a pomůžeme to utřít. To se stane každému.'},
+    {pic:'👵🛍️', q:'Babička nese těžkou tašku. Co uděláš?', o:[['💪','pomůžu jí',['pomu','pomoh','pomoc','nes','pones']],['📺','koukám na televizi',['kouk','televiz','pohad']],['🏃','uteču',['utek','utik']]], why:'Pomůžeme jí tašku nést. Babička bude mít radost.'}
+  ];
+  const STORIES = [
+    {bg:'linear-gradient(#CDEBFF 0 60%,#BFE3A5 60%)', it:[['☀️',85,14,46],['🌳',12,40,90],['🛝',38,62,90],['🧒',62,70,58],['👧',78,74,54],['⚽',52,88,34],['🐕',88,86,44]],
+     names:['skluzavku','pejska','míč','strom'], qs:['Co všechno je na tomhle hřišti?','Co tam dělají děti?','Co se stane potom? Vymysli to.']},
+    {bg:'linear-gradient(#CDEBFF 0 55%,#D8E8A0 55%)', it:[['🏡',20,38,80],['🚜',70,48,70],['🐄',30,78,64],['🐖',58,82,52],['🐔',84,80,44],['🌾',8,84,46],['☀️',88,14,42]],
+     names:['traktor','kravičku','prasátko','slepičku'], qs:['Kdo bydlí na téhle farmě?','Co asi dělá traktor?','Co bys tam dělal ty?']},
+    {bg:'linear-gradient(#BEE3FF 0 45%,#5DB7E8 45% 70%,#F3DFA7 70%)', it:[['☀️',84,14,44],['⛵',30,50,56],['🐬',66,56,48],['🧒',40,84,56],['🪣',60,88,40],['🐚',80,90,32],['🦀',14,88,40]],
+     names:['loďku','delfína','krabíka','kyblíček'], qs:['Kde to asi je?','Co tam můžeme dělat?','Co bys postavil z písku?']},
+    {bg:'linear-gradient(#D7F0D2 0 60%,#8FC27A 60%)', it:[['🌲',12,36,88],['🌲',86,32,88],['🦊',36,74,58],['🐿️',62,50,44],['🍄',58,86,40],['🦔',80,84,46],['🐻',22,82,52]],
+     names:['lištičku','veverku','ježka','houbu'], qs:['Kdo bydlí v lese?','Co dělá veverka?','Co by se mohlo v lese stát? Vymysli příběh.']},
+    {bg:'linear-gradient(#FFE9F2 0 65%,#F7D7B8 65%)', it:[['🎈',12,22,50],['🎈',88,20,50],['🎂',50,58,80],['🎁',20,82,52],['🧒',72,80,56],['👧',36,84,52],['🎉',84,62,44]],
+     names:['dort','balonky','dárky'], qs:['Co se tady slaví?','Co je na stole?','Co by sis přál ty k narozeninám?']}
   ];
 
   // ================== STAV ==================
@@ -535,6 +602,29 @@
     micStatus('heard', 'Slyšela jsem: „'+(alts[0]||'')+'“');
     const words = norm(alts.join(' ')).split(/\s+/).filter(Boolean);
     const t = S.current;
+    if(t.type==='say'){
+      if(t.any){ if(words.length) return sayDone(alts[0]||''); return unknown(); }
+      if(words.some(w=>wordHit(w, t.kw))) return sayDone('');
+      S.wrong++;
+      const p = say([cs(S.wrong<2 ? 'Skoro! Zkus to říct jinak.' : t.hintText)]);
+      p.then(()=>autoListen());
+      return;
+    }
+    if(t.type==='collect'){
+      const seq = [];
+      words.forEach(w => { const id = objOfWord(w, SYN_CS); if(id && !seq.includes(id)) seq.push(id); });
+      const fresh = seq.find(id=>!S.found.includes(id));
+      if(fresh) return collectObj(fresh);
+      if(seq.length) return collectObj(seq[0]);
+      return unknown();
+    }
+    if(t.type==='order'){
+      const seq = [];
+      words.forEach(w => { const i = t.options.findIndex(o=>wordHit(w,o.kw)); if(i>=0 && !seq.includes(i)) seq.push(i); });
+      if(!seq.length) return unknown();
+      for(const i of seq){ if(!S.accepting) break; if(!orderPick(i)) break; }
+      return;
+    }
     if(t.type==='count'){
       const w = words.find(w => /^\d+$/.test(w) || NUMW[w]);
       if(!w) return unknown();
@@ -648,6 +738,33 @@
           prompt:[cs('Co sem nepatří?')], done:[cs(g.why)]};
       });
     }
+    if(mode==='see'){
+      S.found = [];
+      return [0,1,2,3,4].map(i=>({type:'collect',
+        prompt:[cs(i===0 ? 'Co všechno vidíš v pokojíčku? Řekni mi jednu věc.' : pick(['A co ještě vidíš?','Super. Co dalšího tam je?','Najdeš ještě něco?']))], done:[]}));
+    }
+    if(mode==='action'){
+      return shuffle(ACTIONS).slice(0,5).map(x=>({type:'say', pic:'<div class="solo">'+x.e+'</div>', kw:x.kw,
+        hintText:'Napovím ti: '+x.a+'.', prompt:[cs(pick(['Co dělá tahle postavička?','Co se tady děje?','Co dělá?']))], done:[cs(x.d)]}));
+    }
+    if(mode==='order'){
+      return shuffle(ORDERS).slice(0,5).map(g=>{
+        const opts = shuffle(g.c.map((c,k)=>({e:c[0], label:c[1], kw:c[2], ord:k})));
+        return {type:'order', options:opts, prompt:[cs('Co bylo první? Ukaž to po pořádku: první, druhé a třetí.')], done:[cs(g.why)]};
+      });
+    }
+    if(mode==='social'){
+      return shuffle(SOCIAL).slice(0,5).map(s=>{
+        const opts = shuffle(s.o.map((o,k)=>({e:o[0], label:o[1], kw:o[2], ok:k===0, no:'Hmm, myslíš? Zkus to ještě jednou.'})));
+        return {type:'choice', pic:s.pic, answer:opts.findIndex(o=>o.ok), options:opts, prompt:[cs(s.q)], done:[cs(s.why)]};
+      });
+    }
+    if(mode==='story'){
+      const [a,b] = shuffle(STORIES).slice(0,2);
+      const sc = st => '<div style="position:absolute;inset:0;background:'+st.bg+'"></div>'+st.it.map(x=>'<span style="left:'+x[1]+'%;top:'+x[2]+'%;font-size:'+x[3]+'px">'+x[0]+'</span>').join('');
+      const mk = (st, q) => ({type:'say', any:true, pic:sc(st), hintText:'Podívej se třeba na '+pick(st.names)+'.', prompt:[cs(q)], done:[]});
+      return a.qs.map(q=>mk(a,q)).concat(b.qs.slice(0,2).map(q=>mk(b,q)));
+    }
     return [];
   }
   function lessonTasks(L){
@@ -681,11 +798,12 @@
   function drawChoices(t){
     const n = t.options.length, box = $('#choices');
     box.style.gridTemplateColumns = 'repeat('+(n===3?3:2)+',1fr)';
-    box.innerHTML = t.options.map((o,i)=>'<button class="choice" data-i="'+i+'">'+(o.html || esc(o.e||'❓'))+(o.html?'':'<small>'+esc(o.label||'')+'</small>')+'</button>').join('');
+    box.innerHTML = (t.pic ? '<div class="choice" style="grid-column:1/-1;font-size:76px;min-height:110px;background:#F0ECFF">'+t.pic+'</div>' : '') +
+      t.options.map((o,i)=>'<button class="choice" data-i="'+i+'">'+(o.html || esc(o.e||'❓'))+(o.html?'':'<small>'+esc(o.label||'')+'</small>')+'</button>').join('');
   }
 
   // ================== PRŮBĚH ==================
-  const MODE_TITLES = {place:'Kde je to?', listen:'Poslouchej a ukaž', count:'Počítání', shapes:'Barvy a tvary', odd:'Co sem nepatří?', english:'English'};
+  const MODE_TITLES = {place:'Kde je to?', listen:'Poslouchej a ukaž', count:'Počítání', shapes:'Barvy a tvary', odd:'Co sem nepatří?', english:'English', see:'Co vidíš?', action:'Co se děje?', order:'Co bylo první?', social:'Co bys udělal?', story:'Vyprávěj mi'};
   function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('show', s.id===id)); window.scrollTo(0,0); }
   function renderStars(){
     const n = S.tasks.length || 5;
@@ -707,6 +825,8 @@
     $('#nums').classList.toggle('show', kind==='count');
     $('#choices').classList.toggle('show', kind==='choice');
     $('#explain').classList.toggle('show', kind==='explain');
+    $('#pic').classList.toggle('show', kind==='pic');
+    $('#bOk').classList.toggle('show', kind==='pic');
   }
   function showExplain(){
     S.phase = 'explain'; S.current = null; S.accepting = false;
@@ -722,7 +842,8 @@
     const t = S.current = S.tasks[S.idx];
     t.step = 0; S.wrong = 0; S.unknown = 0; clearMarks();
     if(t.type==='count'){ setStage('count'); drawCount(t); }
-    else if(t.type==='choice'){ setStage('choice'); drawChoices(t); }
+    else if(t.type==='choice' || t.type==='order'){ setStage('choice'); drawChoices(t); t.pos = 0; }
+    else if(t.type==='say'){ setStage('pic'); $('#pic').innerHTML = t.pic; }
     else setStage('room');
     S.accepting = true;
     micStatus(DICT||SR ? 'tap' : 'noapi');
@@ -776,6 +897,34 @@
     const o = t.options[i];
     wrong(btn, (o.no || 'Hmm, tohle ne.')+' Zkus to ještě jednou.');
   }
+  function collectObj(id){
+    const el = document.querySelector('.obj[data-id="'+id+'"]');
+    if(S.found.includes(id)){ wrong(null, cap(OBJ[id].acc)+' už máme. Co ještě vidíš?'); return false; }
+    S.found.push(id);
+    S.current.done = [cs(OBJ[id].is.replace('Tohle','To'))];
+    correct(el);
+    return true;
+  }
+  function orderPick(i){
+    const t = S.current, o = t.options[i], btn = document.querySelector('button.choice[data-i="'+i+'"]');
+    if(btn.querySelector('.badge')) return true;
+    if(o.ord===t.pos){
+      t.pos++;
+      btn.insertAdjacentHTML('beforeend','<span class="badge">'+t.pos+'</span>');
+      btn.classList.add('ok');
+      if(t.pos>=t.options.length) correct(null);
+      else say([cs(t.pos===1 ? 'Ano, to bylo první! A co potom?' : 'Správně! A co nakonec?')]).then(()=>autoListen());
+      return true;
+    }
+    wrong(btn, t.pos===0 ? 'To ještě ne. Co bylo úplně první?' : 'To ještě ne. Co bylo potom?');
+    return false;
+  }
+  function sayDone(heard){
+    const t = S.current;
+    if(t.any) t.done = heard ? [cs('Slyšela jsem: '+heard+'.'), cs(pick(['To je moc hezké!','Super vyprávění!','Paráda, jen tak dál!']))]
+                             : [cs(pick(['To je moc hezké!','Super vyprávění!']))];
+    correct(null);
+  }
   function advance(){
     if(S.paused) return;
     S.idx++;
@@ -795,6 +944,16 @@
     if(t.type==='tap'){
       document.querySelector('.obj[data-id="'+t.targets[t.step]+'"]').classList.add('hl');
       if(!silent) say([cs('Podívej, něco tady bliká.')]).then(()=>autoListen());
+    } else if(t.type==='say'){
+      say([cs(t.hintText)]).then(()=>autoListen());
+    } else if(t.type==='collect'){
+      const left = Object.keys(OBJ).filter(id=>!S.found.includes(id));
+      const id = pick(left); document.querySelector('.obj[data-id="'+id+'"]').classList.add('hl');
+      if(!silent) say([cs('Podívej, co tady bliká? Řekni to.')]).then(()=>autoListen());
+    } else if(t.type==='order'){
+      const i = t.options.findIndex(o=>o.ord===t.pos);
+      document.querySelector('button.choice[data-i="'+i+'"]').classList.add('hl');
+      if(!silent) say([cs('Tohle bylo '+(t.pos===0?'první.':'potom.')+' Ťukni na to.')]).then(()=>autoListen());
     } else if(t.type==='choice'){
       document.querySelector('.choice[data-i="'+t.answer+'"]').classList.add('hl');
       if(!silent) say([cs('Podívej, jeden obrázek bliká.')]).then(()=>autoListen());
@@ -807,11 +966,13 @@
 
   // ================== UDÁLOSTI HRY ==================
   $('#room').addEventListener('click', e=>{
-    const g = e.target.closest('.obj'); if(!g || !S.accepting || S.paused || S.current.type!=='tap') return;
-    tapObj(g.dataset.id);
+    const g = e.target.closest('.obj'); if(!g || !S.accepting || S.paused) return;
+    if(S.current.type==='collect') return collectObj(g.dataset.id);
+    if(S.current.type==='tap') tapObj(g.dataset.id);
   });
   $('#choices').addEventListener('click', e=>{
-    const b = e.target.closest('.choice'); if(!b || !S.accepting || S.paused) return;
+    const b = e.target.closest('button.choice'); if(!b || !S.accepting || S.paused) return;
+    if(S.current.type==='order') return orderPick(+b.dataset.i);
     choose(+b.dataset.i);
   });
   $('#nums').addEventListener('click', e=>{
@@ -820,6 +981,7 @@
     if(n===S.current.answer) correct(b); else wrong(b, 'Hmm, to není ono. Spočítej je ještě jednou.');
   });
   $('#bMic').onclick = micClick;
+  $('#bOk').onclick = ()=>{ if(S.accepting && !S.paused && S.current && S.current.type==='say') sayDone(''); };
   $('#bRepeat').onclick = ()=>{ if(S.paused) return; if(S.phase==='explain') showExplain(); else if(S.current) say(S.current.prompt).then(()=>autoListen()); };
   $('#bHint').onclick = ()=>{ if(!S.paused) hint(false); };
   $('#bPause').onclick = ()=>{ S.paused = true; stopListening(); cancelSpeech(); $('#ovPause').classList.add('show'); };
